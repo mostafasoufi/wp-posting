@@ -60,6 +60,7 @@ class WP_Posting
         $this->plugin_url = plugins_url('/', __FILE__);
         $this->plugin_path = plugin_dir_path(__FILE__);
         $this->load_language('wp-posting');
+        $this->load_classes();
     }
 
     /**
@@ -90,5 +91,16 @@ class WP_Posting
             FALSE,
             $this->plugin_path . '/languages'
         );
+    }
+
+    public function load_classes()
+    {
+        $files = array(
+            '/Metabox',
+            '/Posting',
+        );
+        foreach ($files as $file) {
+            include_once dirname(__FILE__) . '/includes' . $file . '.php';
+        }
     }
 }
