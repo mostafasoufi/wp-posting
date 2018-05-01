@@ -40,6 +40,12 @@ class Setting
             $this->add_website($_POST);
         }
 
+        if (isset($_GET['page']) and isset($_GET['action']) and isset($_GET['website'])) {
+            if ($_GET['action'] == 'delete') {
+                $this->delete_website($_GET['website']);
+            }
+        }
+
         include_once dirname(__FILE__) . "/templates/Setting.php";
     }
 
@@ -75,8 +81,30 @@ class Setting
         }
     }
 
-    public static function getWebsites()
+    private function delete_website($website_name)
     {
+        $data = self::$options;
+
+        if (isset($data[$website_name])) {
+            unset($data[$website_name]);
+
+            // Update option
+            update_option(self::$option_name, $data);
+
+            return;
+        }
+    }
+
+    public static function getWebsites($name = false)
+    {
+        if ($name) {
+            if (empty(self::$options[$name])) {
+                return false;
+            }
+
+            return self::$options[$name];
+        }
+
         return self::$options;
     }
 }

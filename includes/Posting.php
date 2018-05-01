@@ -33,13 +33,6 @@ class Posting
             new Metabox;
 
             add_action('publish_post', array($this, 'publish_post'));
-
-            // Set website credential
-            $this->website = array(
-                'api_url' => '',
-                'username' => '',
-                'password' => '',
-            );
         }
     }
 
@@ -51,13 +44,26 @@ class Posting
     public function publish_post($post_id)
     {
         // Check post id
-        if (!$_POST['posting_website_id']) {
+        if (!$_POST['posting_website_name']) {
             return;
         }
 
         // Get data
-        $posting_website_id = $_POST['posting_website_id'];
+        $posting_website_name = $_POST['posting_website_name'];
 
+        $website = Setting::getWebsites($posting_website_name);
+
+        if (!$website) {
+            return;
+        }
+
+        // Set website credential
+        $this->website = array(
+            'username' => $website['username'],
+            'password' => $website['password'],
+            'api_url' => rtrim($website['api_url'], '/'),
+        );
+        
         // Check the post has attachment
         if (has_post_thumbnail($post_id)) {
             $this->attachment_id = $this->send_attachment($post_id);
