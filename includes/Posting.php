@@ -28,17 +28,19 @@ class Posting
      */
     public function __construct()
     {
-        // Initial metabox
-        new Metabox;
+        if (\WP_Posting\Setting::getWebsites()) {
+            // Initial metabox
+            new Metabox;
 
-        add_action('publish_post', array($this, 'publish_post'));
+            add_action('publish_post', array($this, 'publish_post'));
 
-        // Set website credential
-        $this->website = array(
-            'api_url' => '',
-            'username' => '',
-            'password' => '',
-        );
+            // Set website credential
+            $this->website = array(
+                'api_url' => '',
+                'username' => '',
+                'password' => '',
+            );
+        }
     }
 
     /**

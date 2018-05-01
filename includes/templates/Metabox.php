@@ -3,7 +3,9 @@
         <span>Post To: </span>
         <select name="posting_website_id">
             <option value="0">None</option>
-            <option value="1">Charechi.com</option>
+            <?php foreach (\WP_Posting\Setting::getWebsites() as $key => $value) : ?>
+                <option value="<?php echo $key; ?>"><?php echo $key; ?></option>
+            <?php endforeach; ?>
         </select>
 
         <select name="posting_status">
