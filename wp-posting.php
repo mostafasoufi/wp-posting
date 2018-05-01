@@ -96,6 +96,7 @@ class WP_Posting
     public function load_classes()
     {
         $files = array(
+            '/Setting',
             '/Metabox',
             '/Posting',
         );

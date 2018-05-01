@@ -14,6 +14,16 @@ class Posting
     private $website = array('api_url', 'username', 'password');
 
     /**
+     * @var int
+     */
+    private $attachment_id = 0;
+
+    /**
+     * @var string
+     */
+    private $post_status = 'draft';
+
+    /**
      * Constructor.
      */
     public function __construct()
@@ -22,6 +32,13 @@ class Posting
         new Metabox;
 
         add_action('publish_post', array($this, 'publish_post'));
+
+        // Set website credential
+        $this->website = array(
+            'api_url' => '',
+            'username' => '',
+            'password' => '',
+        );
     }
 
     /**
@@ -31,26 +48,37 @@ class Posting
      */
     public function publish_post($post_id)
     {
-        $response_attachment_id = 0;
-
-        // Check the post has attachment
-        if (has_post_thumbnail($post_id)) {
-            $response_attachment_id = $this->post_attachment($post_id);
+        // Check post id
+        if (!$_POST['posting_website_id']) {
+            return;
         }
-
-        // Get post
-        $post = get_post($post_id);
 
         // Get data
         $posting_website_id = $_POST['posting_website_id'];
-        $posting_status = $_POST['posting_status'];
+
+        // Check the post has attachment
+        if (has_post_thumbnail($post_id)) {
+            $this->attachment_id = $this->send_attachment($post_id);
+        }
+
+        // Set post status
+        if ($_POST['posting_status']) {
+            if ($_POST['posting_status'] == 'publish') {
+                $this->post_status = 'publish';
+            } elseif ($_POST['posting_status'] == 'draft') {
+                $this->post_status = 'draft';
+            }
+        }
+
+        // Submit post
+        $this->send_post($post_id);
     }
 
     /**
      * @param $post_id
      * @return bool
      */
-    private function post_attachment($post_id)
+    private function send_attachment($post_id)
     {
         // Get attachment ID
         $attachment_id = get_post_thumbnail_id($post_id);
@@ -75,6 +103,47 @@ class Posting
 
         // Send data
         $response = wp_remote_post($this->website['api_url'] . '/wp/v2/media', $data);
+
+        if (is_wp_error($response)) {
+            return false;
+        }
+
+        $response_code = wp_remote_retrieve_response_code($response);
+
+        if ($response_code == 200 or $response_code == 201) {
+            $body = json_decode($response['body']);
+
+            if (isset($body->id)) {
+                return $body->id;
+            }
+        }
+    }
+
+    /**
+     * @param $post_id
+     * @return bool
+     */
+    private function send_post($post_id)
+    {
+        // Get post
+        $post = get_post($post_id);
+
+        $data = array(
+            'method' => 'POST',
+            'headers' => array(
+                'Authorization' => $this->get_authorization(),
+            ),
+            'body' => array(
+                'title' => $post->post_title,
+                'content' => $post->post_content,
+                'featured_media' => $this->attachment_id,
+                'status' => $this->post_status,
+                'format' => get_post_format($post_id),
+            )
+        );
+
+        // Send data
+        $response = wp_remote_post($this->website['api_url'] . '/wp/v2/posts', $data);
 
         if (is_wp_error($response)) {
             return false;
