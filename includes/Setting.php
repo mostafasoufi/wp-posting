@@ -11,7 +11,12 @@ class Setting
     /**
      * @var mixed|string|void
      */
-    public $options;
+    public static $option_name;
+
+    /**
+     * @var mixed|string|void
+     */
+    public static $options;
 
     /**
      * Setting constructor.
@@ -20,17 +25,59 @@ class Setting
     {
         add_action('admin_menu', array($this, 'add_admin_menu'));
 
-        $this->options = get_option('wpposting_websites');
+        Setting::$option_name = 'wpposting_websites';
+        Setting::$options = get_option(Setting::$option_name);
     }
 
     public function add_admin_menu()
     {
-        add_options_page('WP-Posting Setting', 'WP-Posting Setting', 'manage_options', 'wp-posting', array($this, 'display_page'));
+        add_options_page('WP-Posting Setting', 'WP-Posting', 'manage_options', 'wp-posting', array($this, 'display_page'));
     }
 
     public function display_page()
     {
-        include_once dirname( __FILE__ ) . "/templates/Setting.php";
+        if (isset($_POST['submit']) and isset($_POST['name']) and isset($_POST['username']) and isset($_POST['password']) and isset($_POST['api_url'])) {
+            $this->add_website($_POST);
+        }
+
+        include_once dirname(__FILE__) . "/templates/Setting.php";
+    }
+
+    /**
+     * @param $param
+     */
+    private function add_website($param)
+    {
+        // Clean param
+        $_param = array();
+        foreach ($param as $key => $value) {
+            $_param[$key] = esc_attr($value);
+        }
+
+        if (isset(self::$options[$_param['name']])) {
+            return;
+        }
+
+        $data = array(
+            $_param['name'] => array(
+                'username' => $_param['username'],
+                'password' => $_param['password'],
+                'api_url' => $_param['api_url']
+            )
+        );
+
+        if (self::$options) {
+            // Update option
+            update_option(self::$option_name, array_merge($data, self::$options));
+        } else {
+            // Update option
+            update_option(self::$option_name, $data);
+        }
+    }
+
+    public static function getWebsites()
+    {
+        return self::$options;
     }
 }
 
