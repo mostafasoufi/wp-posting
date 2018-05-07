@@ -1,4 +1,5 @@
 {
   "name": "mostafasoufi/wp-posting",
+  "type": "wordpress-plugin",
   "description": "Send Post/Page to another WordPress"
 }
